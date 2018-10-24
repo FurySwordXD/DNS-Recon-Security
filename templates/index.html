@@ -38,10 +38,10 @@
     <hr>
 
     <form class="w3-content w3-padding-large" id="transactionForm">
-            <label>Party: </label>
-            <input class="w3-input w3-border" type="text" name="party" id="party">
-            <label>Voter ID: </label>
-            <input class="w3-input w3-border" type="number" name="voter_aid" id="voter_aid">
+            <label>URL: </label>
+            <input class="w3-input w3-border" type="text" name="url" id="url">
+            <label>IP: </label>
+            <input class="w3-input w3-border" type="text" name="ip" id="ip">
             <br>
             <button type="button" class="w3-button w3-teal" id="addTransBtn">Add Transaction</button>
             <button type="button" class="w3-button w3-teal" id="mineBtn">Mine</button>
@@ -108,9 +108,9 @@
         $("#addTransBtn").click(function(){
             destination = "http://" + $("#address").val() +":"+ $("#port").val();
             $("#loader").show();
-            var party = $("#party").val();
-            var voter_aid = $("#voter_aid").val();
-            var object = { "party" : party, "voter_aid": voter_aid};
+            var url = $("#url").val();
+            var ip = $("#ip").val();
+            var object = { "url" : url, "ip" : ip};
             console.log(object);
             $.ajax({
                 type: "POST",

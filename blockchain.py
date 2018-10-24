@@ -4,7 +4,7 @@ import requests
 from urllib.parse import urlparse
 from textwrap import dedent
 from uuid import uuid4
-from flask import Flask , jsonify , request, render_template
+from flask import Flask , jsonify , request, render_template, redirect
 from time import time
 from flask_cors import CORS
 
@@ -29,11 +29,11 @@ class Blockchain():
         self.chain.append(block)
         return block
 
-    def new_transaction(self, voter_aid, party):
+    def new_transaction(self,url , ip):
         self.current_transactions.append(
             {
-                'voter_aid': voter_aid,
-                'party': party,
+                'url': url,
+                'ip' : ip
             }
         )
         return self.last_block['index']+1
@@ -60,15 +60,16 @@ class Blockchain():
 
     def register_node(self , address, flag):
         parsed_url = urlparse(address)
-        if flag == 1:
-            self.trigger_flood_nodes(address)
-            for node in self.nodes:
-                node = "http://" + node
-                requests.post(url=f'http://{parsed_url.netloc}/nodes/register', json={
-                    'nodes': [node],
-                    'flag': 0
-                })
-        self.nodes.add(parsed_url.netloc)
+        if parsed_url.netloc != "":
+            if flag == 1:
+                self.trigger_flood_nodes(address)
+                for node in self.nodes:
+                    node = "http://" + node
+                    requests.post(url=f'http://{parsed_url.netloc}/nodes/register', json={
+                        'nodes': [node],
+                        'flag': 0
+                    })
+            self.nodes.add(parsed_url.netloc)
 
     def valid_chain(self , chain):
         last_block = chain[0]
@@ -107,37 +108,18 @@ class Blockchain():
             requests.get(f'http://{node}/nodes/resolve')
 
     def trigger_flood_nodes(self,address):
-        print('flooding now ')
         for node in self.nodes:
             requests.post(url=f'http://{node}/nodes/register', json={
                 'nodes': [address] ,
                 'flag': 0
             })
 
-    def tally_votes(self):
-        votes = {}
-        for block in self.chain:
-            for i in block['transactions']:
-                if i['party'] not in votes:
-                    print('no there ' , i)
-                    votes[i['party']]=1
-                else :
-                    votes[i['party']]+=1
-        return jsonify(votes)
-            
-    def verify_vote(self, voter_aid):
-        for block in self.chain:
-            for i in block['transactions'] :
-                print(i)
-                if i['voter_aid']==str(voter_aid):
-                    return { 'message' : i['party'] }
-        else:
-            return {'message' : "No vote found"}
+
     
-    def redundancy(self,voter_aid):
+    def redundancy(self,url):
         for block in self.chain:
             for i in block['transactions']:
-                if i['voter_aid'] == str(voter_aid):
+                if i['url'] == str(url):
                     return True
         else:
             return False
@@ -183,19 +165,19 @@ def full_transactions():
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.get_json()
-    required = ['voter_aid', 'party']
-    party_response = requests.get(f"http://localhost:5000/party/{values['party']}").json()
-    aid_response = requests.get(f"http://localhost:5000/aids/{values['voter_aid']}").json()
+    required = ['url', 'ip']
+   
     if not all(k in values for k in required):
         return 'missing values' , 400
-    if not party_response['valid'] or not aid_response['valid']:
-        return 'invalid aadhar id or party', 400
-    if blockchain.redundancy(values['voter_aid']):
-        return jsonify({'message': 'You have already voted.'})
-
-    index = blockchain.new_transaction(values['voter_aid'] , values['party'])
-    response = {'message' : f'Transaction will be added to Block {index} '}
-    return jsonify(response) , 201
+  
+    if blockchain.redundancy(values['url']):
+        return jsonify({'message': 'url already taken.'})
+    if urlparse(values['url']).netloc != "":
+        index = blockchain.new_transaction(urlparse(values['url']).netloc , values['ip'])
+        response = {'message' : f'Transaction will be added to Block {index} '}
+        return jsonify(response) , 201
+    else:
+        return jsonify({"message": "Invalid url!"}), 201
 
 @app.route('/chain' , methods=['GET'])
 def full_chain():
@@ -228,9 +210,6 @@ def register_nodes():
     blockchain.resolve_conflicts()
     return jsonify(response) , 201
 
-@app.route('/tally', methods=['GET'])
-def tally_votes():
-    return blockchain.tally_votes()
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
@@ -248,10 +227,12 @@ def consensus():
         }
     return jsonify(response), 200
 
-@app.route('/verify/<int:aid>', methods = ['GET'])
-def verify_vote(aid):
-    print(blockchain.verify_vote(aid))
-    return jsonify(blockchain.verify_vote(aid))
-
+@app.route('/url/<url>', methods=['GET'])
+def red(url):
+    for block in blockchain.chain:
+        for i in block['transactions']:
+                if i['url'] == str(url):
+                    return redirect(i['ip'])
+                    
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=random.randint(5001,5009), debug=True)
