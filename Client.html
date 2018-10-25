@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+    <form class= "w3-content w3-padding-large w3-row">
+        <div class="w3-row">
+            <input class="w3-input w3-border w3-padding-large w3-col m9" type="text" name="ip">
+            <input class="w3-input w3-border w3-padding-large w3-col m9" type="text" name="port">
+        </div>
+        <div class="w3-row">
+            <input class="w3-input w3-border w3-padding-large w3-col m9" type="text" name="url">
+            <button class="w3-btn w3-black w3-padding w3-col m3" id="searchBtn" type="button">Search</button>
+        </div>
+    </form>
+
+</body>
+
+<script>
+    $("#searchBtn").click(function() {
+        var netlocation = $("input[name='ip']").val()+":"+$("input[name='port']").val()+"/url/"+$("input[name='url']").val();
+        console.log(netlocation);
+        $.ajax({
+            type: "GET",
+            url: netlocation,
+            success: function(response)
+            {
+                console.log(response);
+                if(response['Flag'])
+                    window.location.href = "http://" + response['IP'];
+            }
+        });
+    });
+</script>
+</html>

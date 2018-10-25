@@ -8,6 +8,8 @@ from flask import Flask , jsonify , request, render_template, redirect
 from time import time
 from flask_cors import CORS
 
+port = 0
+
 class Blockchain():
     
     def __init__(self):
@@ -229,10 +231,13 @@ def consensus():
 
 @app.route('/url/<url>', methods=['GET'])
 def red(url):
+    print(url)
     for block in blockchain.chain:
         for i in block['transactions']:
                 if i['url'] == str(url):
-                    return redirect(i['ip'])
+                    return jsonify({"Flag": True, "IP": i['ip']})
+    return jsonify({"Flag": False, "Message": "Error 404! Not found"})
                     
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=random.randint(5001,5009), debug=True)
+    port = random.randint(5001,5009)
+    app.run(host='0.0.0.0', port=port, debug=True)
