@@ -115,9 +115,7 @@ class Blockchain():
                 'nodes': [address] ,
                 'flag': 0
             })
-
-
-    
+ 
     def redundancy(self,url):
         for block in self.chain:
             for i in block['transactions']:
@@ -146,6 +144,9 @@ def mine():
     proof = blockchain.proof_of_work(last_proof)
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
+
+    with open("data/"+str(port)+"_chain.json", "w") as file:
+        json.dump(blockchain.chain, file)
 
     response = {
         'message' : "New Block Forged",
@@ -210,6 +211,10 @@ def register_nodes():
         'total_nodes': list(blockchain.nodes)
     }
     blockchain.resolve_conflicts()
+
+    with open("data/"+str(port)+"_chain.json", "w") as file:
+        json.dump(blockchain.chain, file)
+
     return jsonify(response) , 201
 
 
@@ -218,6 +223,8 @@ def consensus():
     replaced = blockchain.resolve_conflicts()
 
     if replaced:
+        with open("data/"+str(port)+"_chain.json", "w") as file:
+            json.dump(blockchain.chain, file)
         response = {
             'message': 'Our chain was replaced',
             'new_chain': blockchain.chain,
@@ -239,5 +246,11 @@ def red(url):
     return jsonify({"Flag": False, "Message": "Error 404! Not found"})
                     
 if __name__ == "__main__":
-    port = random.randint(5001,5009)
+    port = int(input('Enter port: '))
+    try:
+        with open("data/"+str(port)+"_chain.json", "r") as file:
+            blockchain.chain = json.loads(file.read())
+    except:
+        file = open("data/"+str(port)+"_chain.json", "w")
+        file.close()
     app.run(host='0.0.0.0', port=port, debug=True)

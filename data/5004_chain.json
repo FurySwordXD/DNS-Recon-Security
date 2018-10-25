@@ -1,0 +1,1 @@
+[{"index": 1, "timestamp": 1540486587.3850508, "transactions": [], "proof": 100, "previous_hash": 1}, {"index": 2, "timestamp": 1540486843.1511364, "transactions": [{"url": "www.google.com", "ip": "172.217.31.206"}], "proof": 888273, "previous_hash": "d976a82f18839016de48d6d6c22d986daa44c738c6426e5a7caf576439c2aace"}]
